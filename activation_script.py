@@ -1,8 +1,15 @@
 import re
 import sys
+import certifi
+import ssl
 from importlib.abc import PathEntryFinder
 from importlib.util import spec_from_loader
 from urllib.request import urlopen
+
+
+ssl_context = ssl.create_default_context(
+    cafile=certifi.where()
+)
 
 
 class URLLoader:
@@ -10,7 +17,7 @@ class URLLoader:
         return None
     
     def exec_module(self, module):
-        with urlopen(module.__spec__.origin) as page:
+        with urlopen(module.__spec__.origin, context=ssl_context) as page:
             source = page.read()
         code = compile(source, module.__spec__.origin, mode="exec")
         exec(code, module.__dict__)
@@ -34,7 +41,7 @@ def url_hook(some_str):
       
     if not some_str.startswith(("http", "https")):
         raise ImportError
-    with urlopen(some_str) as page: # requests.get()
+    with urlopen(some_str, context=ssl_context) as page: # requests.get()
         data = page.read().decode("utf-8")
     filenames = re.findall("[a-zA-Z_][a-zA-Z0-9_]*.py", data)
     modnames = {name[:-3] for name in filenames}
