@@ -10,8 +10,13 @@ class URLLoader:
         return None
     
     def exec_module(self, module):
-        response = requests.get(module.__spec__.origin)
-        response.raise_for_status()
+        try:
+            response = requests.get(module.__spec__.origin, timeout=5)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as error:
+            raise ImportError(
+                f"Cannot download remote module: {module.__spec__.origin}"
+            ) from error
         source = response.content
         code = compile(source, module.__spec__.origin, mode="exec")
         exec(code, module.__dict__)
@@ -35,8 +40,13 @@ def url_hook(some_str):
       
     if not some_str.startswith(("http", "https")):
         raise ImportError
-    response = requests.get(some_str)
-    response.raise_for_status()
+    try:
+        response = requests.get(some_str, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as error:
+        raise RuntimeError(
+            f"Cannot access remote module host: {some_str}"
+        ) from error
     data = response.text
     filenames = re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*\.py", data)
     modnames = {name[:-3] for name in filenames}
