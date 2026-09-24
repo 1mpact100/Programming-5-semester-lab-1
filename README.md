@@ -18,7 +18,11 @@
 ├── activation_script.py
 ├── rootserver/
 │   ├── index.html
-│   └── myremotemodule.py
+│   ├── myremotemodule.py
+│   └── mypackage/
+│       ├── index.html
+│       ├── __init__.py
+│       └── helper.py
 ├── screens/
 │   ├── screen_1.png
 │   ├── screen_2.png
@@ -230,6 +234,59 @@ except requests.exceptions.RequestException as error:
 
 ![Обработка исключения при неправильной ссылке](screens/screen_3.png)
 
+## Задание про-уровня: загрузка пакета
+
+Дополнительно реализована загрузка удалённого пакета `mypackage`.
+
+Пакет содержит файл `__init__.py` и вложенный модуль `helper.py`:
+
+```text
+mypackage/
+├── index.html
+├── __init__.py
+└── helper.py
+```
+
+Для пакета `URLFinder` создаёт спецификацию с параметром:
+
+```python
+spec_from_loader(
+    name,
+    loader,
+    origin=origin,
+    is_package=True
+)
+```
+
+В качестве `origin` используется файл:
+
+```text
+mypackage/__init__.py
+```
+
+Дополнительно задаётся `spec.submodule_search_locations`, содержащий URL каталога пакета. Благодаря этому Python понимает, где искать вложенные модули при выполнении:
+
+```python
+import mypackage.helper
+```
+
+Проверка выполняется следующим образом:
+
+```python
+import mypackage
+mypackage.package_function()
+
+import mypackage.helper
+mypackage.helper.helper_function()
+```
+
+Ожидаемый результат:
+
+```text
+Package imported
+Helper module imported
+```
+
 ## Результат работы
 
 В ходе лабораторной работы реализован механизм удалённого импорта Python-модулей. Один и тот же модуль был успешно загружен:
@@ -238,6 +295,8 @@ except requests.exceptions.RequestException as error:
 2. с GitHub Pages.
 
 Также была добавлена обработка ошибок при недоступности удалённого хоста и при невозможности загрузить конкретный файл модуля.
+
+Кроме того, реализована загрузка пакета с файлом `__init__.py` и вложенным модулем.
 
 Для HTTP-запросов используется библиотека `requests`, а подключение механизма к стандартному импортёру Python выполняется через `sys.path_hooks`.
 
